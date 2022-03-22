@@ -1,30 +1,39 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import logo from './logo.svg'
-import { NavLink, Route,Routes } from 'react-router-dom';
+import { Navigate, NavLink, Route, Routes } from 'react-router-dom';
 import HomePage from './conponents/Home';
 import ProductPage from './conponents/Product';
+import WebsiteLayout from './pages/layouts/WebsiteLayout';
+import AdminLayout from './pages/layouts/AdminLayout';
+import ProductManager from './pages/ProductManager';
+import axios from 'axios';
+import ProductType from './pages/types/product';
 function App() {
-  const [count, setCount] = useState(0)
-  const [myName,setMyName] = useState("Khuat Thanh Long");
-  const [myAge,setAge] = useState(18)
+  const [products,setProducts] = useState<ProductType[]>([])
+  useEffect(() =>{
+    const getProducts = async () =>{
+        const { data } = await axios.get("http://localhost:3001/products");
+        setProducts(data)
+    }
+    getProducts();
+  },[]);
+  const removeId = (id :number) =>{
+    axios.delete(`http://localhost:3001/products/${id}`)
+    setProducts(products.filter(item => item.id !== id))
+  }
   return (
     <div className="App">
-      <header className="App-header">
-        <nav>
-          <ul>
-            <li><NavLink to="/">Home</NavLink></li>
-            <li><NavLink to="products">Products</NavLink></li>
-            <li><NavLink to="about">About</NavLink></li>
-          </ul>
-        </nav>
-      </header>
-      <main>
-        <Routes>
-            <Route path='/' element = {<HomePage/>}/>
-            <Route path='/products' element = {<ProductPage/>}/>
-            <Route path='/about' element = {<h1>abou page</h1>}/>
-        </Routes>
-      </main>
+      <Routes >
+        <Route path='/' element={<WebsiteLayout />}>
+          <Route index element={<h1>HomePage</h1>} />
+          <Route path='products' element={<h1>Products Page</h1>} />
+        </Route>
+        <Route path='admin' element={<AdminLayout />}>
+          <Route index element={<Navigate to="dashboard" />} />
+          <Route path='dashboard' element={<h1>Dashboard Page</h1>} />
+          <Route path='products' element={<ProductManager products={products} onRemove={removeId}/>} />
+        </Route>
+      </Routes>
     </div>
   )
 }
